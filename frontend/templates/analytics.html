@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="page-title"><i class="bi bi-graph-up-arrow" style="color: var(--accent-success);"></i> Analytics Dashboard</h1>
+                <p class="page-subtitle">Recruitment insights and skill distribution analysis</p>
+            </div>
+            <a href="{{ url_for('auth.dashboard') }}" class="btn-secondary-custom btn-sm-custom">
+                <i class="bi bi-arrow-left"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4 fade-in">
+        <div class="col-md-3 col-sm-6">
+            <div class="glass-card stat-card purple">
+                <div class="stat-number purple">{{ resumes|length }}</div>
+                <div class="stat-label">Total Resumes</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="glass-card stat-card cyan">
+                <div class="stat-number cyan">{{ jobs|length }}</div>
+                <div class="stat-label">Job Postings</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="glass-card stat-card green">
+                <div class="stat-number green">{{ skills_dist|length }}</div>
+                <div class="stat-label">Unique Skills</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="glass-card stat-card amber">
+                <div class="stat-number amber">{{ top_candidates|length }}</div>
+                <div class="stat-label">Top Candidates</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Skills Distribution Chart -->
+        <div class="col-lg-6 fade-in stagger-1">
+            <div class="glass-card-static h-100">
+                <h5 class="section-title"><i class="bi bi-bar-chart-fill" style="color: var(--accent-primary-light);"></i> Top Skills Distribution</h5>
+                {% if skills_dist %}
+                <div class="chart-container">
+                    <canvas id="skillsBarChart"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <p>Upload resumes to see skill distribution</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Skills Pie Chart -->
+        <div class="col-lg-6 fade-in stagger-2">
+            <div class="glass-card-static h-100">
+                <h5 class="section-title"><i class="bi bi-pie-chart-fill" style="color: var(--accent-secondary);"></i> Skills Breakdown</h5>
+                {% if skills_dist %}
+                <div class="chart-container">
+                    <canvas id="skillsPieChart"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">🍩</div>
+                    <p>Upload resumes to see breakdown</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Skills List -->
+    {% if skills_dist %}
+    <div class="row g-4 mt-2">
+        <div class="col-12 fade-in stagger-3">
+            <div class="glass-card-static">
+                <h5 class="section-title"><i class="bi bi-stars" style="color: var(--accent-warning);"></i> Skills Ranking</h5>
+                <div class="row">
+                    {% for skill_name, count in skills_dist[:12] %}
+                    <div class="col-md-4 col-sm-6 mb-2">
+                        <div class="skill-gap-row" style="border: none; padding: 0.4rem 0;">
+                            <div class="skill-gap-name" style="min-width: 120px;">
+                                {% set rank_class = 'rank-' ~ loop.index if loop.index <= 3 else 'rank-other' %}
+                                <span class="rank-badge {{ rank_class }}" style="width: 24px; height: 24px; font-size: 0.7rem; margin-right: 8px;">
+                                    {{ loop.index }}
+                                </span>
+                                {{ skill_name }}
+                            </div>
+                            <div class="skill-gap-bar" style="height: 22px;">
+                                {% set max_count = skills_dist[0][1] if skills_dist else 1 %}
+                                {% set width_pct = (count / max_count * 100)|int %}
+                                <div class="skill-gap-fill has" style="width: {{ width_pct }}%;">
+                                    {{ count }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top Candidates -->
+    {% if top_candidates %}
+    <div class="row g-4 mt-2">
+        <div class="col-12 fade-in stagger-4">
+            <div class="glass-card-static">
+                <h5 class="section-title"><i class="bi bi-trophy-fill" style="color: var(--accent-warning);"></i> Top Candidates</h5>
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Candidate</th>
+                                <th>Skills</th>
+                                <th>Resume Score</th>
+                                <th>Avg Match Score</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in top_candidates %}
+                            <tr>
+                                <td>
+                                    <span class="rank-badge {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% else %}rank-other{% endif %}">
+                                        {{ loop.index }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>{{ c.candidate_name }}</strong>
+                                    {% if c.email %}<br><small style="color: var(--text-muted);">{{ c.email }}</small>{% endif %}
+                                </td>
+                                <td>
+                                    {% if c.skills %}
+                                        {% for skill in c.skills.split(',')[:3] %}
+                                        <span class="skill-tag">{{ skill.strip() }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="score-badge {% if c.resume_score and c.resume_score >= 70 %}score-high{% elif c.resume_score and c.resume_score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                        {{ c.resume_score or 0 }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if c.avg_match_score %}
+                                    <span class="score-badge {% if c.avg_match_score >= 70 %}score-high{% elif c.avg_match_score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                        {{ c.avg_match_score|round(1) }}%
+                                    </span>
+                                    {% else %}
+                                    <small style="color: var(--text-muted);">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('resumes.view_resume', resume_id=c.id) }}" class="btn-secondary-custom btn-sm-custom" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if skills_dist %}
+<!-- Store data in JSON format so IDEs don't show JavaScript syntax errors -->
+<script id="chart-data" type="application/json">
+{
+    "labels": [{% for name, count in skills_dist[:10] %}"{{ name }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+    "data": [{% for name, count in skills_dist[:10] %}{{ count }}{% if not loop.last %}, {% endif %}{% endfor %}]
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Read the securely parsed JSON data
+    const dataElement = document.getElementById('chart-data');
+    if (dataElement) {
+        const chartData = JSON.parse(dataElement.textContent);
+        
+        initSkillsChart('skillsBarChart', chartData.labels, chartData.data);
+        initDoughnutChart('skillsPieChart', chartData.labels, chartData.data);
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

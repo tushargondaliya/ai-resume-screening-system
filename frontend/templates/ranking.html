@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Candidate Ranking{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="page-title"><i class="bi bi-trophy-fill" style="color: var(--accent-warning);"></i> Candidate Ranking</h1>
+                <p class="page-subtitle">
+                    Job: <strong style="color: var(--accent-primary-light);">{{ job.job_title }}</strong>
+                    {% if job.company_name %} — {{ job.company_name }}{% endif %}
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('matching.run_matching', job_id=job.id) }}" class="btn-success-custom">
+                    <i class="bi bi-arrow-repeat"></i> Re-run Matching
+                </a>
+                <a href="{{ url_for('auth.dashboard') }}" class="btn-secondary-custom btn-sm-custom">
+                    <i class="bi bi-arrow-left"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Details -->
+    <div class="glass-card mb-4 fade-in" style="padding: 1.2rem 1.5rem;">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <small class="form-label-custom" style="margin-bottom: 0.2rem;">Required Skills</small>
+                <div>
+                    {% for skill in job.skills_required.split(',') %}
+                    <span class="skill-tag">{{ skill.strip() }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <small class="form-label-custom" style="margin-bottom: 0.2rem;">Experience</small>
+                <p style="margin: 0; font-size: 0.9rem;">{{ job.experience_required or 'Any' }}</p>
+            </div>
+            <div class="col-md-3">
+                <small class="form-label-custom" style="margin-bottom: 0.2rem;">Education</small>
+                <p style="margin: 0; font-size: 0.9rem;">{{ job.education_required or 'Any' }}</p>
+            </div>
+            <div class="col-md-2 text-center">
+                <small class="form-label-custom" style="margin-bottom: 0.2rem;">Candidates</small>
+                <p style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--accent-secondary);">{{ rankings|length }}</p>
+            </div>
+        </div>
+    </div>
+
+    {% if rankings %}
+    <!-- Rankings Chart -->
+    <div class="glass-card-static mb-4 fade-in stagger-1">
+        <h5 class="section-title"><i class="bi bi-bar-chart-fill" style="color: var(--accent-info);"></i> Match Score Distribution</h5>
+        <div class="chart-container">
+            <canvas id="rankingChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Rankings Table -->
+    <div class="glass-card-static fade-in stagger-2">
+        <h5 class="section-title"><i class="bi bi-list-ol" style="color: var(--accent-warning);"></i> Ranked Candidates</h5>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Rank</th>
+                        <th>Candidate</th>
+                        <th>Matched Skills</th>
+                        <th>Missing Skills</th>
+                        <th style="width: 120px;">Match Score</th>
+                        <th style="width: 140px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rankings %}
+                    <tr>
+                        <td>
+                            <span class="rank-badge {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% else %}rank-other{% endif %}">
+                                {{ loop.index }}
+                            </span>
+                        </td>
+                        <td>
+                            <strong>{{ r.candidate_name }}</strong>
+                            {% if r.candidate_email %}
+                            <br><small style="color: var(--text-muted);">{{ r.candidate_email }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.matched_skills %}
+                                {% for skill in r.matched_skills.split(',')[:5] %}
+                                <span class="skill-tag matched">✓ {{ skill.strip() }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <small style="color: var(--text-muted);">None</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.missing_skills %}
+                                {% for skill in r.missing_skills.split(',')[:3] %}
+                                <span class="skill-tag missing">✗ {{ skill.strip() }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="skill-tag matched">All matched!</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="score-badge {% if r.match_score >= 70 %}score-high{% elif r.match_score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                {{ r.match_score }}%
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('resumes.view_resume', resume_id=r.resume_id) }}" class="btn-secondary-custom btn-sm-custom" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a href="{{ url_for('matching.skill_gap_page', resume_id=r.resume_id, job_id=job.id) }}" class="btn-primary-custom btn-sm-custom" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                    <i class="bi bi-puzzle"></i> Gap
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="glass-card-static">
+        <div class="empty-state">
+            <div class="empty-state-icon">🎯</div>
+            <h5>No Rankings Yet</h5>
+            <p>Click "Re-run Matching" to generate candidate rankings for this job.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if rankings %}
+<!-- Store data in JSON format so IDEs don't show JavaScript syntax errors -->
+<script id="ranking-data" type="application/json">
+{
+    "labels": [{% for r in rankings %}"{{ r.candidate_name }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+    "data": [{% for r in rankings %}{{ r.match_score }}{% if not loop.last %}, {% endif %}{% endfor %}]
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dataElement = document.getElementById('ranking-data');
+    if (dataElement) {
+        const rankingData = JSON.parse(dataElement.textContent);
+        initScoresChart('rankingChart', rankingData.labels, rankingData.data);
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

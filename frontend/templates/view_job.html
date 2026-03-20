@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Job Details{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header">
+        <a href="{{ url_for('auth.dashboard') }}" class="btn-secondary-custom btn-sm-custom mb-3" style="display: inline-flex;">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+        <h1 class="page-title">{{ job.job_title }}</h1>
+        {% if job.company_name %}<p class="page-subtitle">{{ job.company_name }}</p>{% endif %}
+    </div>
+
+    <div class="glass-card-static fade-in">
+        <div class="row g-4">
+            <div class="col-md-8">
+                <h6 class="form-label-custom">Required Skills</h6>
+                <div class="mb-3">
+                    {% for skill in job.skills_required.split(',') %}
+                    <span class="skill-tag" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">{{ skill.strip() }}</span>
+                    {% endfor %}
+                </div>
+                {% if job.description %}
+                <h6 class="form-label-custom mt-3">Description</h6>
+                <p style="color: var(--text-secondary); line-height: 1.8;">{{ job.description }}</p>
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                <div style="padding: 1rem; background: var(--bg-glass); border-radius: var(--radius-sm); border: 1px solid var(--border-glass);">
+                    <h6 class="form-label-custom">Experience</h6>
+                    <p>{{ job.experience_required or 'Any' }}</p>
+                    <h6 class="form-label-custom">Education</h6>
+                    <p>{{ job.education_required or 'Any' }}</p>
+                </div>
+                <div class="d-flex flex-column gap-2 mt-3">
+                    <a href="{{ url_for('matching.run_matching', job_id=job.id) }}" class="btn-success-custom text-center">
+                        <i class="bi bi-cpu"></i> Run AI Matching
+                    </a>
+                    <a href="{{ url_for('matching.ranking_page', job_id=job.id) }}" class="btn-primary-custom text-center" style="justify-content: center;">
+                        <i class="bi bi-trophy"></i> View Rankings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
