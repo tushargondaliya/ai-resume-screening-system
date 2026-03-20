@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}All Resumes{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h1 class="page-title"><i class="bi bi-people-fill" style="color: var(--accent-primary-light);"></i> All Resumes</h1>
+                <p class="page-subtitle">{{ resumes|length }} candidate resume(s) in system</p>
+            </div>
+            <a href="{{ url_for('resumes.upload_resume') }}" class="btn-primary-custom btn-sm-custom">
+                <i class="bi bi-cloud-upload"></i> Upload More
+            </a>
+        </div>
+    </div>
+
+    {% if resumes %}
+    <div class="glass-card-static fade-in">
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Candidate</th>
+                        <th>Email</th>
+                        <th>Skills</th>
+                        <th>Experience</th>
+                        <th>Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resume in resumes %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ resume.candidate_name }}</strong></td>
+                        <td><small>{{ resume.email or 'N/A' }}</small></td>
+                        <td>
+                            {% if resume.skills %}
+                                {% for skill in resume.skills.split(',')[:3] %}
+                                <span class="skill-tag">{{ skill.strip() }}</span>
+                                {% endfor %}
+                                {% if resume.skills.split(',')|length > 3 %}
+                                <span class="skill-tag" style="opacity:0.6;">+{{ resume.skills.split(',')|length - 3 }}</span>
+                                {% endif %}
+                            {% else %}
+                            <small style="color: var(--text-muted);">None</small>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ resume.experience or 'N/A' }}</small></td>
+                        <td>
+                            <span class="score-badge {% if resume.resume_score >= 70 %}score-high{% elif resume.resume_score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                {{ resume.resume_score }}%
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('resumes.view_resume', resume_id=resume.id) }}" class="btn-secondary-custom btn-sm-custom" style="padding:0.25rem 0.5rem;font-size:0.75rem;">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="javascript:void(0)" 
+                                   data-url="{{ url_for('resumes.delete_resume_route', resume_id=resume.id) }}" 
+                                   data-title="{{ resume.candidate_name }}"
+                                   onclick="confirmDelete(this.dataset.url, this.dataset.title)" 
+                                   class="btn-danger-custom btn-sm-custom" style="padding:0.25rem 0.5rem;font-size:0.75rem;">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="glass-card-static">
+        <div class="empty-state">
+            <div class="empty-state-icon">📄</div>
+            <h5>No Resumes Uploaded</h5>
+            <p>Upload candidate resumes to get started with AI analysis.</p>
+            <a href="{{ url_for('resumes.upload_resume') }}" class="btn-primary-custom btn-sm-custom mt-2">
+                <i class="bi bi-cloud-upload"></i> Upload Resumes
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Skill Gap Analysis{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="page-title"><i class="bi bi-puzzle-fill" style="color: #f472b6;"></i> Skill Gap Analysis</h1>
+                <p class="page-subtitle">Comparing candidate skills with job requirements</p>
+            </div>
+            <a href="{{ url_for('matching.ranking_page', job_id=job.id) }}" class="btn-secondary-custom btn-sm-custom">
+                <i class="bi bi-arrow-left"></i> Back to Rankings
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Candidate vs Job -->
+        <div class="col-md-6 fade-in">
+            <div class="glass-card-static h-100">
+                <h5 class="section-title"><i class="bi bi-person-fill" style="color: var(--accent-secondary);"></i> Candidate</h5>
+                <h4 style="font-weight: 800;">{{ resume.candidate_name }}</h4>
+                {% if resume.email %}<small style="color: var(--text-muted);">{{ resume.email }}</small>{% endif %}
+                <div class="mt-3">
+                    <small class="form-label-custom">Skills</small>
+                    <div>
+                        {% for skill in resume.skills.split(',') %}
+                        <span class="skill-tag">{{ skill.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="mt-3 text-center" style="padding: 1rem; border-radius: var(--radius-sm); background: var(--bg-glass);">
+                    <small class="form-label-custom">Match Score</small>
+                    <div style="font-size: 2.5rem; font-weight: 900; font-family: var(--font-mono);">
+                        {% set match_class = 'score-high' if match_data.match_score >= 70 else ('score-medium' if match_data.match_score >= 40 else 'score-low') %}
+                        <span class="{{ match_class }}" style="padding: 0; background: none;">
+                            {{ match_data.match_score }}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 fade-in stagger-1">
+            <div class="glass-card-static h-100">
+                <h5 class="section-title"><i class="bi bi-briefcase-fill" style="color: var(--accent-warning);"></i> Job Requirements</h5>
+                <h4 style="font-weight: 800;">{{ job.job_title }}</h4>
+                {% if job.company_name %}<small style="color: var(--text-muted);">{{ job.company_name }}</small>{% endif %}
+                <div class="mt-3">
+                    <small class="form-label-custom">Required Skills</small>
+                    <div>
+                        {% for skill in job.skills_required.split(',') %}
+                        <span class="skill-tag">{{ skill.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if job.experience_required %}
+                <div class="mt-3">
+                    <small class="form-label-custom">Experience</small>
+                    <p style="margin: 0; font-size: 0.9rem;">{{ job.experience_required }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Skill Gap Visualization -->
+    <div class="row g-4 mt-2">
+        <div class="col-12 fade-in stagger-2">
+            <div class="glass-card-static">
+                <h5 class="section-title"><i class="bi bi-bar-chart-steps" style="color: var(--accent-info);"></i> Skill Gap Visualization</h5>
+                
+                {% set required_skills = job.skills_required.split(',') %}
+                {% set matched_list = match_data.matched_skills.split(',') if match_data.matched_skills else [] %}
+                {% set missing_list = match_data.missing_skills.split(',') if match_data.missing_skills else [] %}
+                
+                {% for skill in required_skills %}
+                {% set skill_clean = skill.strip() %}
+                <div class="skill-gap-row">
+                    <div class="skill-gap-name">{{ skill_clean }}</div>
+                    <div class="skill-gap-bar">
+                        {% set is_matched = skill_clean.lower() in match_data.matched_skills.lower() if match_data.matched_skills else false %}
+                        {% if is_matched %}
+                        <div class="skill-gap-fill has" style="width: 100%;">✓ Has Skill</div>
+                        {% else %}
+                        <div class="skill-gap-fill missing">✗ Missing</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mt-2">
+        <div class="col-md-4 fade-in stagger-3">
+            <div class="glass-card text-center" style="border-top: 3px solid var(--accent-success);">
+                <div style="font-size: 2rem;">✅</div>
+                <h5 style="font-weight: 700;">Matched Skills</h5>
+                {% if match_data.matched_skills %}
+                    {% for skill in match_data.matched_skills.split(',') %}
+                    <span class="skill-tag matched">{{ skill.strip() }}</span>
+                    {% endfor %}
+                {% else %}
+                    <small style="color: var(--text-muted);">None</small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4 fade-in stagger-4">
+            <div class="glass-card text-center" style="border-top: 3px solid var(--accent-danger);">
+                <div style="font-size: 2rem;">❌</div>
+                <h5 style="font-weight: 700;">Missing Skills</h5>
+                {% if match_data.missing_skills %}
+                    {% for skill in match_data.missing_skills.split(',') %}
+                    <span class="skill-tag missing">{{ skill.strip() }}</span>
+                    {% endfor %}
+                {% else %}
+                    <span class="skill-tag matched">All skills matched!</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4 fade-in stagger-5">
+            <div class="glass-card text-center" style="border-top: 3px solid var(--accent-info);">
+                <div style="font-size: 2rem;">💡</div>
+                <h5 style="font-weight: 700;">Recommendation</h5>
+                {% if match_data.match_score >= 70 %}
+                <p style="color: var(--accent-success); font-weight: 600;">Strong match! Recommended for interview.</p>
+                {% elif match_data.match_score >= 40 %}
+                <p style="color: var(--accent-warning); font-weight: 600;">Moderate match. Consider for second round.</p>
+                {% else %}
+                <p style="color: var(--accent-danger); font-weight: 600;">Low match. Candidate needs more relevant skills.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
