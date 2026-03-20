@@ -47,10 +47,14 @@ def upload_resume():
             
         processed_count = 0
         
+        # Capture context data before threading to avoid RuntimeError: Working outside of application context
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        user_id = session.get('user_id')
+        
         def process_single_file(file):
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                file_path = os.path.join(upload_folder, filename)
                 file.save(file_path)
                 
                 # Parse resume
@@ -72,7 +76,7 @@ def upload_resume():
                     resume_file=filename,
                     raw_text=raw_text,
                     resume_score=score,
-                    uploaded_by=session.get('user_id'),
+                    uploaded_by=user_id,
                     job_id=job_id
                 )
                 return True
