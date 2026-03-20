@@ -4,12 +4,18 @@ Main Application - Flask Server
 AU Hackathon 2.0 | Atmiya University
 """
 import os
-from flask import Flask, render_template, redirect, url_for, session
+from flask import Flask, render_template, redirect, url_for, session, request
 import config
 from models import init_db
 
 # Create Flask app
-app = Flask(__name__)
+import sys
+# Add backend to path so module imports work
+sys.path.append(os.path.dirname(__file__))
+
+app = Flask(__name__, 
+            template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'templates')),
+            static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'static')))
 app.config['SECRET_KEY'] = config.SECRET_KEY
 app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH
@@ -33,8 +39,8 @@ app.register_blueprint(match_bp)
 @app.route('/')
 def home():
     """Home page."""
-    # Redirect logged-in users to dashboard
-    if 'user_id' in session:
+    # Redirect logged-in users to dashboard unless explicitly skipping
+    if 'user_id' in session and not request.args.get('skip_redirect'):
         return redirect(url_for('auth.dashboard'))
     return render_template('index.html')
 

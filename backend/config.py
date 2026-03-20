@@ -2,8 +2,9 @@ import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# Database
+# Database Settings
 DATABASE = os.path.join(BASE_DIR, 'database', 'resume_screening.db')
+SCHEMA_FILE = os.path.join(BASE_DIR, 'database', 'schema.sql')
 
 # Upload folder
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads', 'resumes')
