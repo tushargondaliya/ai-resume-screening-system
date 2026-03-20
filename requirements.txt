@@ -2,3 +2,8 @@ flask
 PyPDF2
 python-docx
 pandas
+gunicorn
+scikit-learn
+passlib
+python-jose
+bcrypt
