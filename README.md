@@ -20,4 +20,4 @@ pip install -r requirements.txt
 python app.py
 
 ## 👨‍💻 Author
-Umang Vaghela
+Tushar Gondaliya 
